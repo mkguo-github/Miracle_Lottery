@@ -13,8 +13,38 @@ from get_data import get_current_number, spider
 from loguru import logger
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--name', default="ssq", type=str, help="选择训练数据: 双色球/大乐透")
+parser.add_argument('--name', default=None, type=str, help="选择训练数据: 双色球/大乐透 (如果为空则自动根据星期决定)")
 args = parser.parse_args()
+
+def get_lottery_based_on_weekday():
+    """根据当前UTC时间判断应该预测哪种彩票"""
+    from datetime import datetime
+
+    # 获取当前UTC时间的星期（0=周一, 1=周二, ..., 6=周日）
+    weekday = datetime.utcnow().weekday()
+
+    # UTC时间23:59对应北京时间次日07:59
+    # 所以我们需要考虑时区偏移
+
+    # 更简单的方法：直接根据UTC时间的星期来判断
+    if weekday in [1, 3, 6]:  # 周二、四、日 UTC → 大乐透
+        return "dlt"
+    elif weekday in [2, 4, 0]:  # 周三、五、日 UTC → 双色球
+        return "ssq"
+    else:
+        # 周一、周六 UTC 不执行预测
+        return None
+
+# 如果没有指定彩票类型，则根据星期自动决定
+if args.name is None:
+    auto_lottery = get_lottery_based_on_weekday()
+    if auto_lottery is not None:
+        lottery_name = auto_lottery
+    else:
+        logger.info("今天不是预测日，跳过预测")
+        exit(0)
+else:
+    lottery_name = args.name
 
 # 关闭eager模式
 tf.compat.v1.disable_eager_execution()
@@ -193,7 +223,8 @@ def run(name):
 
 
 if __name__ == '__main__':
-    if not args.name:
-        raise Exception("玩法名称不能为空！")
+    if lottery_name is None:
+        logger.info("今天不是预测日，跳过预测")
+        exit(0)
     else:
-        run(args.name)
+        run(lottery_name)
