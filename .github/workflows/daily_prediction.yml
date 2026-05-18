@@ -1,0 +1,83 @@
+name: Daily Lottery Prediction
+
+on:
+  schedule:
+    # 每天凌晨2点运行（UTC时间）
+    - cron: '0 2 * * *'
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  predict-lottery:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.6
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.6'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Create necessary directories
+      run: |
+        mkdir -p data/ssq data/dlt model/ssq/red_ball_model model/ssq/blue_ball_model model/dlt/red_ball_model model/dlt/blue_ball_model
+
+    - name: Run get_data.py for SSQ (双色球)
+      run: |
+        python get_data.py --name ssq
+
+    - name: Run run_train_model.py for SSQ (双色球)
+      run: |
+        python run_train_model.py --name ssq --train_test_split 0.8
+
+    - name: Run run_predict.py for SSQ (双色球)
+      id: predict_ssq
+      run: |
+        echo "Running prediction for SSQ..."
+        python run_predict.py --name ssq > prediction_results.txt
+        echo "Prediction completed"
+
+    - name: Run get_data.py for DLT (大乐透)
+      run: |
+        python get_data.py --name dlt
+
+    - name: Run run_train_model.py for DLT (大乐透)
+      run: |
+        python run_train_model.py --name dlt --train_test_split 0.8
+
+    - name: Run run_predict.py for DLT (大乐透)
+      id: predict_dlt
+      run: |
+        echo "Running prediction for DLT..."
+        python run_predict.py --name dlt >> prediction_results.txt
+        echo "Prediction completed"
+
+    - name: Upload prediction results
+      uses: actions/upload-artifact@v3
+      with:
+        name: lottery-predictions
+        path: |
+          prediction_results.txt
+          data/ssq/data.csv
+          data/dlt/data.csv
+
+    - name: Post prediction summary to console
+      run: |
+        echo "=== Lottery Prediction Summary ==="
+        echo "Date: $(date)"
+        echo ""
+        echo "SSQ (双色球) Prediction Results:"
+        echo "================================"
+        tail -10 prediction_results.txt | grep -E "(预测结果|Prediction results)" || echo "No SSQ results found"
+        echo ""
+        echo "DLT (大乐透) Prediction Results:"
+        echo "==============================="
+        tail -5 prediction_results.txt | grep -E "(预测结果|Prediction results)" || echo "No DLT results found"
+        echo ""
+        echo "Full prediction details saved to prediction_results.txt"

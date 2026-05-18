@@ -7,8 +7,39 @@
 ![avatar](img/alipay.png)
 
 
-## Installing
-        
+## 🚀 自动运行设置
+
+本项目现在支持通过GitHub Actions每天自动运行预测！
+
+### 自动运行配置
+- **运行时间**: 每天凌晨2点 (UTC时间)
+- **自动执行脚本**:
+  1. `get_data.py` - 爬取最新的开奖数据
+  2. `run_train_model.py` - 重新训练模型
+  3. `run_predict.py` - 生成预测结果
+- **预测类型**: 双色球(SSQ)和大乐透(DLT)
+- **结果保存**: 预测结果会自动上传到GitHub Artifacts
+
+
+### 手动触发工作流
+你也可以手动触发工作流：
+1. 进入 GitHub 仓库的 "Actions" 标签页
+2. 选择 "Daily Lottery Prediction" 工作流
+3. 点击 "Run workflow" 按钮
+
+
+### 查看预测结果
+每次运行后，你可以在以下位置找到预测结果：
+- **GitHub Actions Artifacts**: 下载 `lottery-predictions` artifact
+- **控制台输出**: 在 Actions 页面查看详细日志
+
+
+## 本地运行
+
+如果你想在本地运行，请按照以下步骤：
+
+### 安装依赖
+
 * step1，安装anaconda(可参考https://zhuanlan.zhihu.com/p/32925500)；
 
 * step2，创建一个conda环境，conda create -n your_env_name python=3.6；
@@ -19,6 +50,10 @@
 
 ## Getting Started
 
+## Getting Started
+
+### 本地运行
+
 ```python
 python get_data.py  --name ssq  # 执行获取双色球训练数据
 ```
@@ -26,8 +61,8 @@ python get_data.py  --name ssq  # 执行获取双色球训练数据
 若要大乐透，替换参数 --name dlt 即可
 
 ```python
-python run_train_model.py --name ssq  # 执行训练双色球模型
-``` 
+python run_train_model.py --name ssq --train_test_split 0.8  # 执行训练双色球模型
+```
 开始模型训练，先训练红球模型，再训练蓝球模型，模型参数和超参数在 config.py 文件中自行配置
 具体训练时间消耗与模型参数和超参数相关。
 
@@ -35,6 +70,19 @@ python run_train_model.py --name ssq  # 执行训练双色球模型
 python run_predict.py  --name ssq # 执行双色球模型预测
 ```
 预测结果会打印在控制台
+
+
+### 自动化运行 (推荐)
+
+本项目已配置GitHub Actions自动运行：
+- **每日自动更新**: 每天凌晨2点自动爬取最新数据并重新训练模型
+- **双彩种支持**: 同时预测双色球和大乐透
+- **结果归档**: 每次运行的预测结果都会保存到Artifacts中
+
+要启用自动运行：
+1. 将代码推送到GitHub仓库
+2. GitHub Actions会自动检测并运行工作流
+3. 在Actions页面查看运行历史和下载预测结果
 
 ## Update
 
